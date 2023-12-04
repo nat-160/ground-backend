@@ -1,5 +1,4 @@
 // Example controllers/userController.js
-const Users = require("../models/users");
 const { QueryTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
@@ -21,8 +20,7 @@ exports.newMessage = async (req, res) => {
     });
     res.json({ message: "message sent!" });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: error });
   }
 };
 
@@ -38,8 +36,7 @@ exports.getUserMessages = async (req, res) => {
     );
     res.json(messages);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: error });
   }
 };
 
@@ -58,9 +55,58 @@ exports.getUserPage = async (req, res) => {
     });
     res.json(messages);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: error });
   }
 };
 
+exports.follow = async (req, res) => {
+  try {
+    const { followerName, followingName } = req.query;
+    const query = `
+    INSERT INTO connections (followerName, followingName)
+    VALUES (:followerName, :followingName);
+    `;
+    await sequelize.query(query, {
+      replacements: { followerName, followingName },
+      type: QueryTypes.INSERT,
+    });
+    res.json({ message: followerName + " followed " + followingName });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
+exports.unfollow = async (req, res) => {
+  try {
+    const { followerName, followingName } = req.query;
+    const query = `
+    DELETE FROM connections
+    WHERE followerName = :followerName AND followingName = :followingName;
+    `;
+    await sequelize.query(query, {
+      replacements: { followerName, followingName },
+      type: QueryTypes.DELETE,
+    });
+    res.json({ message: followerName + " unfollowed " + followingName });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
+exports.register = async (req, res) => {
+  try {
+    const { username, userpassword } = req.query;
+    const query = `
+    INSERT INTO users (username, userpassword)
+    VALUES (:username, :userpassword);
+    `;
+    await sequelize.query(query, {
+      replacements: { username, userpassword },
+      type: QueryTypes.INSERT,
+    });
+    res.json({ message: "Registered user " + username });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
 // Add more controller functions as needed
