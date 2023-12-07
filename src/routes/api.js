@@ -2,36 +2,24 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/controller");
-const logincontroller = require("../controllers/loginController");
+const logincontroller = require("../controllers/tokenController");
 
-// GET /api/
+// GET routes
 router.get("/", controller.default);
+router.get("/user/:username", controller.user);
 
-// POST /api/new-message
-router.post("/new-message", controller.newMessage);
-
-// GET /api/user/:username
-router.get("/user/:username", controller.getUserMessages);
-
-// POST /api/home
-router.post("/home", controller.getUserPage);
-
-// POST /api/follow
-router.post("/follow", controller.follow);
-
-// POST /api/unfollow
-router.post("/unfollow", controller.unfollow);
-
-// POST /api/register
+// POST routes
+// register(username, userpassword)
 router.post("/register", controller.register);
-
-// POST /api/login
-router.post("/login", logincontroller.login);
-
-// POST /api/home-test
-router.post("/home-test", logincontroller.home);
-
-// POST /api/new-test
-router.post("/new-test", logincontroller.newMessage);
+// login(username, userpassword)
+router.post("/login", controller.login);
+// home(token)
+router.post("/home", controller.home);
+// new(token, message)
+router.post("/new", controller.new);
+// follow(token, followingName)
+router.post("/follow", controller.follow);
+// unfollow(token, followingName)
+router.post("/unfollow", controller.unfollow);
 
 module.exports = router;

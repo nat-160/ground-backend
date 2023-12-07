@@ -1,30 +1,12 @@
-// Example controllers/userController.js
 const { QueryTypes } = require("sequelize");
 const sequelize = require("../config/database");
+const jwt = require("jsonwebtoken");
 
 exports.default = async (_, res) => {
   res.json({ message: "backend api!" });
 };
 
-exports.newMessage = async (req, res) => {
-  try {
-    const { username, message } = req.query;
-    const query = `
-      INSERT INTO messages (username, message)
-      VALUES (:username, :message)
-    `;
-
-    await sequelize.query(query, {
-      replacements: { username, message },
-      type: QueryTypes.INSERT,
-    });
-    res.json({ message: "message sent!" });
-  } catch (error) {
-    res.status(500).json({ message: error });
-  }
-};
-
-exports.getUserMessages = async (req, res) => {
+exports.user = async (req, res) => {
   try {
     const username = req.params.username;
     const messages = await sequelize.query(
@@ -40,15 +22,56 @@ exports.getUserMessages = async (req, res) => {
   }
 };
 
-exports.getUserPage = async (req, res) => {
+exports.register = async (req, res) => {
   try {
-    const { username } = req.query;
+    const { username, password } = req.query;
     const query = `
-    SELECT messages.*
-    FROM messages
-    JOIN users ON messages.username = users.username
-    JOIN connections ON users.username = connections.followingName
-    WHERE connections.followerName = :username;`;
+      INSERT INTO users (username, password)
+      VALUES (:username, :password);
+      `;
+    await sequelize.query(query, {
+      replacements: { username, password },
+      type: QueryTypes.INSERT,
+    });
+    res.json({ message: "Registered user " + username });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { username, password } = req.query;
+    const query = `
+    SELECT password FROM users 
+    WHERE users.username = :username`;
+    const result = await sequelize.query(query, {
+      replacements: { username },
+      type: QueryTypes.SELECT,
+    });
+    const actualPW = result[0].password;
+    if (password != actualPW && result.length > 0) {
+      res.json({ success: false });
+    } else {
+      const token = jwt.sign({ username: username }, "secretkey-edwin");
+      res.json({ success: true, token });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
+exports.home = async (req, res) => {
+  try {
+    const { token } = req.query;
+    const username = jwt.verify(token, "secretkey-edwin").username;
+    console.log(username);
+    const query = `
+      SELECT messages.*
+      FROM messages
+      JOIN users ON messages.username = users.username
+      JOIN connections ON users.username = connections.followingName
+      WHERE connections.followerName = :username;`;
     const messages = await sequelize.query(query, {
       replacements: { username },
       type: QueryTypes.SELECT,
@@ -59,13 +82,32 @@ exports.getUserPage = async (req, res) => {
   }
 };
 
+exports.new = async (req, res) => {
+  try {
+    const { token, message } = req.query;
+    const username = jwt.verify(token, "secretkey-edwin").username;
+    const query = `
+          INSERT INTO messages (username, message)
+          VALUES (:username, :message)
+        `;
+    await sequelize.query(query, {
+      replacements: { username, message },
+      type: QueryTypes.INSERT,
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
 exports.follow = async (req, res) => {
   try {
-    const { followerName, followingName } = req.query;
+    const { token, followingName } = req.query;
+    const followerName = jwt.verify(token, "secretkey-edwin").username;
     const query = `
-    INSERT INTO connections (followerName, followingName)
-    VALUES (:followerName, :followingName);
-    `;
+      INSERT INTO connections (followerName, followingName)
+      VALUES (:followerName, :followingName);
+      `;
     await sequelize.query(query, {
       replacements: { followerName, followingName },
       type: QueryTypes.INSERT,
@@ -78,11 +120,12 @@ exports.follow = async (req, res) => {
 
 exports.unfollow = async (req, res) => {
   try {
-    const { followerName, followingName } = req.query;
+    const { token, followingName } = req.query;
+    const followerName = jwt.verify(token, "secretkey-edwin").username;
     const query = `
-    DELETE FROM connections
-    WHERE followerName = :followerName AND followingName = :followingName;
-    `;
+      DELETE FROM connections
+      WHERE followerName = :followerName AND followingName = :followingName;
+      `;
     await sequelize.query(query, {
       replacements: { followerName, followingName },
       type: QueryTypes.DELETE,
@@ -92,21 +135,3 @@ exports.unfollow = async (req, res) => {
     res.status(500).json({ message: error });
   }
 };
-
-exports.register = async (req, res) => {
-  try {
-    const { username, userpassword } = req.query;
-    const query = `
-    INSERT INTO users (username, userpassword)
-    VALUES (:username, :userpassword);
-    `;
-    await sequelize.query(query, {
-      replacements: { username, userpassword },
-      type: QueryTypes.INSERT,
-    });
-    res.json({ message: "Registered user " + username });
-  } catch (error) {
-    res.status(500).json({ message: error });
-  }
-};
-// Add more controller functions as needed

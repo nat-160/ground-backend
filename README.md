@@ -2,8 +2,22 @@
 
 access using `hostname/api/`
 
-routes:  
+## GET routes:
+
 - /
-- /new-message
-- /user/:username
+- /user/`[username]`
+
+## POST routes:
+
+- /register
+  - username, password
+- /login
+  - username, password
 - /home
+  - token
+- /new
+  - token, message
+- /follow
+  - token, followingName
+- /unfollow
+  - token, followingName
