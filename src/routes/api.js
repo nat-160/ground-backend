@@ -16,9 +16,13 @@ router.post("/login", controller.login);
 router.post("/home", controller.home);
 // new(token, message)
 router.post("/new", controller.new);
+// delete(token, messageID)
+router.post("/delete", controller.delete);
 // follow(token, followingName)
 router.post("/follow", controller.follow);
 // unfollow(token, followingName)
 router.post("/unfollow", controller.unfollow);
+// unregister(token, password)
+router.post("/unregister", controller.unregister);
 
 module.exports = router;

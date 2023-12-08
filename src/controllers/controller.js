@@ -43,8 +43,8 @@ exports.login = async (req, res) => {
   try {
     const { username, password } = req.query;
     const query = `
-    SELECT password FROM users 
-    WHERE users.username = :username`;
+      SELECT password FROM users 
+      WHERE users.username = :username`;
     const result = await sequelize.query(query, {
       replacements: { username },
       type: QueryTypes.SELECT,
@@ -87,14 +87,41 @@ exports.new = async (req, res) => {
     const { token, message } = req.query;
     const username = jwt.verify(token, "secretkey-edwin").username;
     const query = `
-          INSERT INTO messages (username, message)
-          VALUES (:username, :message)
-        `;
+      INSERT INTO messages (username, message)
+      VALUES (:username, :message)`;
     await sequelize.query(query, {
       replacements: { username, message },
       type: QueryTypes.INSERT,
     });
     res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
+exports.delete = async (req, res) => {
+  try {
+    const { token, messageID } = req.query;
+    const username = jwt.verify(token, "secretkey-edwin").username;
+    var query = `
+      SELECT username FROM messages 
+      WHERE messages.messageid = :messageID`;
+    const result = await sequelize.query(query, {
+      replacements: { messageID },
+      type: QueryTypes.SELECT,
+    });
+    if (result[0].username == username) {
+      query = `
+        DELETE FROM messages
+        WHERE messages.messageid = :messageID;`;
+      await sequelize.query(query, {
+        replacements: { messageID },
+        type: QueryTypes.DELETE,
+      });
+      res.json({ message: "Message " + messageID + " deleted" });
+    } else {
+      res.json({ message: "Token is not message owner" });
+    }
   } catch (error) {
     res.status(500).json({ message: error });
   }
@@ -106,8 +133,7 @@ exports.follow = async (req, res) => {
     const followerName = jwt.verify(token, "secretkey-edwin").username;
     const query = `
       INSERT INTO connections (followerName, followingName)
-      VALUES (:followerName, :followingName);
-      `;
+      VALUES (:followerName, :followingName);`;
     await sequelize.query(query, {
       replacements: { followerName, followingName },
       type: QueryTypes.INSERT,
@@ -124,13 +150,56 @@ exports.unfollow = async (req, res) => {
     const followerName = jwt.verify(token, "secretkey-edwin").username;
     const query = `
       DELETE FROM connections
-      WHERE followerName = :followerName AND followingName = :followingName;
-      `;
+      WHERE followerName = :followerName 
+      AND followingName = :followingName;`;
     await sequelize.query(query, {
       replacements: { followerName, followingName },
       type: QueryTypes.DELETE,
     });
     res.json({ message: followerName + " unfollowed " + followingName });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
+exports.unregister = async (req, res) => {
+  try {
+    const { token, password } = req.query;
+    const username = jwt.verify(token, "secretkey-edwin").username;
+    var query = `
+      SELECT password FROM users
+      WHERE users.username = :username`;
+    const result = await sequelize.query(query, {
+      replacements: { username },
+      type: QueryTypes.SELECT,
+    });
+    if (result[0].password == password && result.length > 0) {
+      query = `
+        DELETE FROM users
+        WHERE users.username = :username`;
+      await sequelize.query(query, {
+        replacements: { username },
+        type: QueryTypes.DELETE,
+      });
+      query = `
+        DELETE FROM messages
+        WHERE messages.username = :username`;
+      await sequelize.query(query, {
+        replacements: { username },
+        type: QueryTypes.DELETE,
+      });
+      query = `
+        DELETE FROM connections
+        WHERE connections.followername = :username 
+        OR connections.followingname = :username`;
+      await sequelize.query(query, {
+        replacements: { username },
+        type: QueryTypes.DELETE,
+      });
+      res.json({ message: "User " + username + " has been unregistered" });
+    } else {
+      res.json({ message: "User/Password mismatch" });
+    }
   } catch (error) {
     res.status(500).json({ message: error });
   }
