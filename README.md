@@ -5,19 +5,33 @@ access using `hostname/api/`
 ## GET routes:
 
 - /
-- /user/`[username]`
+  - return: message
+- /user/[username]
+  - return: list(messages)
 
 ## POST routes:
 
 - /register
   - username, password
+  - return: message
+- /unregister
+  - token, password
+  - return: message
 - /login
   - username, password
+  - return: token
 - /home
   - token
+  - return: list(messages)
 - /new
   - token, message
+  - return: message
+- /delete
+  - token, messageID
+  - return: message
 - /follow
   - token, followingName
+  - return: message
 - /unfollow
   - token, followingName
+  - return: message

@@ -39,6 +39,49 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.unregister = async (req, res) => {
+  try {
+    const { token, password } = req.query;
+    const username = jwt.verify(token, "secretkey-edwin").username;
+    var query = `
+      SELECT password FROM users
+      WHERE users.username = :username`;
+    const result = await sequelize.query(query, {
+      replacements: { username },
+      type: QueryTypes.SELECT,
+    });
+    if (result[0].password == password && result.length > 0) {
+      query = `
+        DELETE FROM users
+        WHERE users.username = :username`;
+      await sequelize.query(query, {
+        replacements: { username },
+        type: QueryTypes.DELETE,
+      });
+      query = `
+        DELETE FROM messages
+        WHERE messages.username = :username`;
+      await sequelize.query(query, {
+        replacements: { username },
+        type: QueryTypes.DELETE,
+      });
+      query = `
+        DELETE FROM connections
+        WHERE connections.followername = :username 
+        OR connections.followingname = :username`;
+      await sequelize.query(query, {
+        replacements: { username },
+        type: QueryTypes.DELETE,
+      });
+      res.json({ message: "User " + username + " has been unregistered" });
+    } else {
+      res.json({ message: "User/Password mismatch" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.query;
@@ -54,10 +97,10 @@ exports.login = async (req, res) => {
       res.json({ success: false });
     } else {
       const token = jwt.sign({ username: username }, "secretkey-edwin");
-      res.json({ success: true, token });
+      res.json(token);
     }
   } catch (error) {
-    res.status(500).json({ message: error });
+    res.status(500).json({ message: error, token: null });
   }
 };
 
@@ -157,49 +200,6 @@ exports.unfollow = async (req, res) => {
       type: QueryTypes.DELETE,
     });
     res.json({ message: followerName + " unfollowed " + followingName });
-  } catch (error) {
-    res.status(500).json({ message: error });
-  }
-};
-
-exports.unregister = async (req, res) => {
-  try {
-    const { token, password } = req.query;
-    const username = jwt.verify(token, "secretkey-edwin").username;
-    var query = `
-      SELECT password FROM users
-      WHERE users.username = :username`;
-    const result = await sequelize.query(query, {
-      replacements: { username },
-      type: QueryTypes.SELECT,
-    });
-    if (result[0].password == password && result.length > 0) {
-      query = `
-        DELETE FROM users
-        WHERE users.username = :username`;
-      await sequelize.query(query, {
-        replacements: { username },
-        type: QueryTypes.DELETE,
-      });
-      query = `
-        DELETE FROM messages
-        WHERE messages.username = :username`;
-      await sequelize.query(query, {
-        replacements: { username },
-        type: QueryTypes.DELETE,
-      });
-      query = `
-        DELETE FROM connections
-        WHERE connections.followername = :username 
-        OR connections.followingname = :username`;
-      await sequelize.query(query, {
-        replacements: { username },
-        type: QueryTypes.DELETE,
-      });
-      res.json({ message: "User " + username + " has been unregistered" });
-    } else {
-      res.json({ message: "User/Password mismatch" });
-    }
   } catch (error) {
     res.status(500).json({ message: error });
   }
