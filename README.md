@@ -35,3 +35,9 @@ access using `hostname/api/`
 - /unfollow
   - token, followingName
   - return: message
+- /followstate
+  - token, followingName
+  - return: success, message
+- /followtoggle
+  - token, followingName
+  - return: message

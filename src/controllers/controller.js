@@ -204,3 +204,67 @@ exports.unfollow = async (req, res) => {
     res.status(500).json({ message: error });
   }
 };
+
+exports.followstate = async (req, res) => {
+  try {
+    const { token, followingName } = req.query;
+    const followerName = jwt.verify(token, "secretkey-edwin").username;
+    const query = `
+      SELECT count(1)
+      FROM connections 
+      WHERE connections.followername = :followerName
+      AND connections.followingname = :followingName`;
+    const result = await sequelize.query(query, {
+      replacements: { followerName, followingName },
+      type: QueryTypes.SELECT,
+    });
+    const state = result[0].count > 0;
+    res.json({
+      success: state,
+      message:
+        followerName +
+        (state ? " is following " : " is not following ") +
+        followingName,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};
+
+exports.followtoggle = async (req, res) => {
+  try {
+    const { token, followingName } = req.query;
+    const followerName = jwt.verify(token, "secretkey-edwin").username;
+    var query = `
+      SELECT count(1)
+      FROM connections 
+      WHERE connections.followername = :followerName
+      AND connections.followingname = :followingName`;
+    const result = await sequelize.query(query, {
+      replacements: { followerName, followingName },
+      type: QueryTypes.SELECT,
+    });
+    if (result[0].count > 0) {
+      query = `
+        DELETE FROM connections
+        WHERE followerName = :followerName 
+        AND followingName = :followingName;`;
+      await sequelize.query(query, {
+        replacements: { followerName, followingName },
+        type: QueryTypes.DELETE,
+      });
+      res.json({ message: followerName + " unfollowed " + followingName });
+    } else {
+      query = `
+      INSERT INTO connections (followerName, followingName)
+      VALUES (:followerName, :followingName);`;
+      await sequelize.query(query, {
+        replacements: { followerName, followingName },
+        type: QueryTypes.INSERT,
+      });
+      res.json({ message: followerName + " followed " + followingName });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};

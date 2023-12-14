@@ -24,5 +24,9 @@ router.post("/follow", controller.follow);
 router.post("/unfollow", controller.unfollow);
 // unregister(token, password)
 router.post("/unregister", controller.unregister);
+// followstate(token,followingName)
+router.post("/followstate", controller.followstate);
+// followtoggle(token,followingName)
+router.post("/followtoggle", controller.followtoggle);
 
 module.exports = router;
