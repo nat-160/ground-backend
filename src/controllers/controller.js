@@ -285,3 +285,15 @@ exports.me = async (req, res) => {
     res.status(500).json({ message: error });
   }
 };
+
+exports.users = async (req, res) => {
+  try {
+    const query = "SELECT users.* FROM users";
+    const result = await sequelize.query(query, {
+      type: QueryTypes.SELECT,
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};

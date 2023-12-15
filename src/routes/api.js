@@ -6,6 +6,7 @@ const controller = require("../controllers/controller");
 // GET routes
 router.get("/", controller.default);
 router.get("/user/:username", controller.user);
+router.get("/users", controller.users);
 
 // POST routes
 // register(username, password)

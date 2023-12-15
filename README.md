@@ -8,6 +8,8 @@ access using `hostname/api/`
   - return: message
 - /user/[username]
   - return: list(messages)
+- /users
+  - return: list(users)
 
 ## POST routes:
 
