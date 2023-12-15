@@ -268,3 +268,20 @@ exports.followtoggle = async (req, res) => {
     res.status(500).json({ message: error });
   }
 };
+
+exports.me = async (req, res) => {
+  try {
+    const { token } = req.query;
+    const username = jwt.verify(token, "secretkey-edwin").username;
+    const query = `
+      SELECT messages.* FROM messages
+      WHERE username = :username`;
+    const result = await sequelize.query(query, {
+      replacements: { username },
+      type: QueryTypes.SELECT,
+    });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: error });
+  }
+};

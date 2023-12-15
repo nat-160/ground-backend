@@ -41,3 +41,6 @@ access using `hostname/api/`
 - /followtoggle
   - token, followingName
   - return: message
+- /me
+  - token
+  - return: list(messages)
